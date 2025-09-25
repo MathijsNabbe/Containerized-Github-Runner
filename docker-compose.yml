@@ -1,0 +1,15 @@
+services:    
+  github-runner:
+    # image: to-be-determined
+    restart: unless-stopped
+    environment:
+      REPO_URL: ${REPO_URL}
+      RUNNER_TOKEN: ${RUNNER_TOKEN}
+      RUNNER_NAME: ${RUNNER_NAME}
+      RUNNER_LABELS: ${RUNNER_LABELS}
+    volumes:
+      - runner-data:/home/runner/actions-runner 
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+
+volumes:
+  runner-data:
