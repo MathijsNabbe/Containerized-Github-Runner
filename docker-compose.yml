@@ -1,6 +1,8 @@
 services:    
   github-runner:
-    # image: to-be-determined
+     build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       REPO_URL: ${REPO_URL}
