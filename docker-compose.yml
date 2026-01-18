@@ -3,14 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      DOCKER_BUILDKIT: 0  
     restart: unless-stopped
     environment:
       REPO_URL: ${REPO_URL}
       RUNNER_TOKEN: ${RUNNER_TOKEN}
       RUNNER_NAME: ${RUNNER_NAME}
       RUNNER_LABELS: ${RUNNER_LABELS}
+      DOCKER_BUILDKIT: 0  
     volumes:
       - runner-data:/home/runner/actions-runner 
       - /var/run/docker.sock:/var/run/docker.sock:rw
