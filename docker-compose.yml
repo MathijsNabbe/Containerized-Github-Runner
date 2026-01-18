@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      DOCKER_BUILDKIT: 0  
     restart: unless-stopped
     environment:
       REPO_URL: ${REPO_URL}
