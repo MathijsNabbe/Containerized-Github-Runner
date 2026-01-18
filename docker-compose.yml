@@ -1,6 +1,6 @@
 services:    
   github-runner:
-     build:
+    build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
