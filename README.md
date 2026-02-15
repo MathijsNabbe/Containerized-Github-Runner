@@ -34,6 +34,13 @@ Running your GitHub runner in a container offers several advantages over using a
 - Non-root runner user with persistent workspace storage.
 - Quick and consistent environment setup using Docker.
 
+## Tested Actions
+| Action | NET10.0 |
+| ------ | :-----: |
+| .NET Build | :white_check_mark: |
+| .NET Test | :white_check_mark: |
+| SonarQube Analysis | :white_check_mark: |
+
 ## Installation Guide (Linux)
 ### 1. Open a terminal / SSH into your Docker host. 
 Make sure you’re on the machine where Docker Engine is running and where you want to run the GitHub runner.
