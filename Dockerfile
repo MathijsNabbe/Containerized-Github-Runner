@@ -1,15 +1,21 @@
 FROM ubuntu:22.04
 
-# Define GitHub Actions runner version
 ARG RUNNER_VERSION=2.328.0
 ENV RUNNER_VERSION=${RUNNER_VERSION}
 
-# Install dependencies, including SkiaSharp / System.Drawing libraries and Docker CLI
+# Prevent tzdata prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# -----------------------------
+# Base dependencies
+# -----------------------------
 RUN apt-get update && apt-get install -y \
     curl \
     tar \
     unzip \
     git \
+    wget \
+    ca-certificates \
     libfontconfig1 \
     libfreetype6 \
     libx11-6 \
@@ -19,32 +25,60 @@ RUN apt-get update && apt-get install -y \
     libicu70 \
     libxml2 \
     zlib1g \
-    wget \
     docker.io \
     gosu \
     && rm -rf /var/lib/apt/lists/*
 
-# Add a non-root user for the GitHub runner
+# -----------------------------
+# Install Microsoft package repo
+# -----------------------------
+RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb
+
+# -----------------------------
+# Install .NET 10 SDK with script
+# -----------------------------
+RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    && rm /tmp/dotnet-install.sh
+
+# Make dotnet available globally
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH="$DOTNET_ROOT:$PATH"
+
+# Verify installation
+RUN dotnet --info
+
+# -----------------------------
+# Create runner user
+# -----------------------------
 RUN useradd -m -s /bin/bash runner
 
-# Copy entrypoint scripts
-COPY entrypoint.sh /entrypoint.sh
-COPY entrypoint-runner.sh /home/runner/entrypoint-runner.sh
-RUN chmod +x /entrypoint.sh /home/runner/entrypoint-runner.sh
+# -----------------------------
+# Install Microsoft package repo
+# -----------------------------
+RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb
 
-# Download GitHub Actions runner
-RUN mkdir -p /home/runner/actions-runner && \
-    cd /home/runner/actions-runner && \
-    curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
-    tar -xzf actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
-    rm actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
-    ./bin/installdependencies.sh
+# -----------------------------
+# Install .NET 10 SDK with script
+# -----------------------------
+RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    && rm /tmp/dotnet-install.sh
 
-# Start as root (needed for dynamic docker group handling in entrypoint)
-USER root
-WORKDIR /home/runner
+# Make dotnet available globally
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH="$DOTNET_ROOT:$PATH"
 
-# Ensure dotnet global tools are in PATH
-ENV PATH="${PATH}:/home/runner/.dotnet/tools"
+# Verify installation
+RUN dotnet --info
 
-ENTRYPOINT ["/entrypoint.sh"]
+# -----------------------------
+# Create runner user
+# -----------------------------
+RUN useradd -m -s /bin/bash runner
