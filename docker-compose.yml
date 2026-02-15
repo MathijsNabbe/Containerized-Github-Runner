@@ -9,7 +9,6 @@ services:
       RUNNER_TOKEN: ${RUNNER_TOKEN}
       RUNNER_NAME: ${RUNNER_NAME}
       RUNNER_LABELS: ${RUNNER_LABELS}
-      DOCKER_BUILDKIT: 0  
     volumes:
       - runner-data:/home/runner/actions-runner 
       - /var/run/docker.sock:/var/run/docker.sock:rw
