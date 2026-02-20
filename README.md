@@ -40,6 +40,7 @@ Running your GitHub runner in a container offers several advantages over using a
 | .NET Build | :white_check_mark: |
 | .NET Test | :white_check_mark: |
 | SonarQube Analysis | :white_check_mark: |
+| Docker Image Build | :white_check_mark: |
 
 ## Installation Guide (Linux)
 ### 1. Open a terminal / SSH into your Docker host. 
