@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g \
     docker.io \
     gosu \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
