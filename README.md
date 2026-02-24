@@ -35,12 +35,19 @@ Running your GitHub runner in a container offers several advantages over using a
 - Quick and consistent environment setup using Docker.
 
 ## Tested Actions
+### Dotnet
 | Action | NET10.0 |
 | ------ | :-----: |
 | .NET Build | :white_check_mark: |
 | .NET Test | :white_check_mark: |
 | SonarQube Analysis | :white_check_mark: |
 | Docker Image Build | :white_check_mark: |
+
+### Kotlin
+| Action | Android 35 SDK |
+| ------ | :------------: |
+| Kotlin Build | :white_check_mark: |
+| SonarQube Analysis | :white_check_mark: |
 
 ## Installation Guide (Linux)
 ### 1. Open a terminal / SSH into your Docker host. 
