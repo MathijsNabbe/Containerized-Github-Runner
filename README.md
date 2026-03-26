@@ -42,12 +42,10 @@ Running your GitHub runner in a container offers several advantages over using a
 | .NET Test | :white_check_mark: |
 | SonarQube Analysis | :white_check_mark: |
 | Docker Image Build | :white_check_mark: |
-
-### Kotlin
-| Action | Android 35 SDK |
-| ------ | :------------: |
-| Kotlin Build | :white_check_mark: |
-| SonarQube Analysis | :white_check_mark: |
+| Avalonia Desktop | :white_check_mark: |
+| Avalonia Web | :white_check_mark: |
+| Avalonia Android | :white_check_mark: |
+| Avalonia IOS | :x: |
 
 ## Installation Guide (Linux)
 ### 1. Open a terminal / SSH into your Docker host. 

@@ -35,13 +35,20 @@ RUN apt-get update && apt-get install -y \
     libicu70 \
     libxml2 \
     zlib1g \
+    sudo \
+    python3 \
+    build-essential \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
 # Install Java 17 OpenJDK
 # -----------------------------
-RUN apt-get update && apt-get install -y openjdk-17-jdk unzip wget curl git \
+RUN apt-get update && apt-get install -y openjdk-17-jdk \
     && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # -----------------------------
 # Install Microsoft package repo
@@ -51,47 +58,73 @@ RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-p
     && rm packages-microsoft-prod.deb
 
 # -----------------------------
-# Install .NET 10 SDK with script
+# Install .NET 10 SDK into user directory
 # -----------------------------
+USER runner
+RUN mkdir -p /home/runner/.dotnet
+ENV DOTNET_ROOT=/home/runner/.dotnet
+ENV PATH="$DOTNET_ROOT:$PATH:$DOTNET_ROOT/tools"
+
 RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
     && chmod +x /tmp/dotnet-install.sh \
-    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir $DOTNET_ROOT \
     && rm /tmp/dotnet-install.sh
 
-# Make dotnet available globally
-ENV DOTNET_ROOT=/usr/share/dotnet
-ENV PATH="$DOTNET_ROOT:$PATH"
+# Make .NET globally visible for SonarScanner & other tools
+USER root
+RUN ln -s /home/runner/.dotnet /usr/share/dotnet
+USER runner
 
 # Verify installation
 RUN dotnet --info
 
 # -----------------------------
-# Install Android SDK 36 command-line tools
+# Install Android SDK command-line tools
 # -----------------------------
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="$JAVA_HOME/bin:$PATH"
 
+USER root
 RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools \
     && cd $ANDROID_SDK_ROOT/cmdline-tools \
-    && wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip \
-    && unzip cmdline-tools.zip \
-    && rm cmdline-tools.zip \
-    && mv cmdline-tools latest
+    && wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip \
+    && unzip tools.zip \
+    && rm tools.zip \
+    && mv cmdline-tools latest \
+    && chown -R runner:runner /opt/android-sdk
 
-# Accept licenses
-RUN yes | sdkmanager --licenses
+USER runner
+RUN yes | sdkmanager --licenses \
+    && sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
-# Install correct SDK
-RUN sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+# -----------------------------
+# Install Node.js 20 LTS
+# -----------------------------
+USER root
+RUN apt-get update \
+    && apt-get remove -y nodejs npm libnode-dev \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && node -v \
+    && npm -v
 
-# Apply write permissions for runner user
-RUN chown -R runner:runner /opt/android-sdk
+# -----------------------------
+# Install Emscripten & Node dependencies for Browser/WASM
+# -----------------------------
+USER runner
+ENV EMSDK_DIR=/home/runner/emsdk
+RUN git clone https://github.com/emscripten-core/emsdk.git $EMSDK_DIR \
+    && cd $EMSDK_DIR \
+    && ./emsdk install latest \
+    && ./emsdk activate latest \
+    && echo "source $EMSDK_DIR/emsdk_env.sh" >> /home/runner/.bashrc
+
+ENV PATH="$EMSDK_DIR/upstream/emscripten:$PATH"
 
 # -----------------------------
 # GitHub Actions runner
 # -----------------------------
+USER root
 RUN mkdir -p /home/runner/actions-runner \
     && cd /home/runner/actions-runner \
     && curl -L -o actions-runner.tar.gz \
@@ -100,6 +133,12 @@ RUN mkdir -p /home/runner/actions-runner \
     && rm actions-runner.tar.gz \
     && ./bin/installdependencies.sh \
     && chown -R runner:runner /home/runner
+
+# -----------------------------
+# Add runner to docker group at build time
+# -----------------------------
+RUN groupadd -g 999 docker || true \
+    && usermod -aG docker runner    
 
 # -----------------------------
 # Entrypoints
@@ -111,10 +150,8 @@ RUN chmod +x /entrypoint.sh /home/runner/entrypoint-runner.sh
 # -----------------------------
 # Environment
 # -----------------------------
-ENV DOTNET_ROOT=/usr/share/dotnet
-ENV PATH="${PATH}:/usr/share/dotnet:/home/runner/.dotnet/tools"
-
+ENV PATH="${PATH}:/home/runner/.dotnet/tools"
 WORKDIR /home/runner
-USER root
+USER runner
 
 ENTRYPOINT ["/entrypoint.sh"]
